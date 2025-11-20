@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Heart Particles Animation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body { margin:0; overflow:hidden; }
+canvas { position:absolute; }
+svg { position:absolute; display:none; }
+
+.container {
+  position:absolute; top:50%; left:50%;
+  transform: translate(-50%, -50%);
+  color:#333; font-family:"Georgia", serif;
+  text-align:center; max-width:600px; z-index:100;
+  background:#faf7f2;
+  border:1px solid #e5dfd3; border-radius:6px;
+  padding:30px; box-shadow:0 4px 15px rgba(0,0,0,0.15);
+  background-image: linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px);
+  background-size:100% 28px;
+}
+
+.btn {
+  padding:12px 24px; font-size:18px; border:none; border-radius:8px;
+  cursor:pointer; margin:10px; transition:all 0.3s;
+  font-family:"Georgia", serif; opacity:0; /* invisible at start */
+}
+
+.btn-yes, .btn-no {
+  background-color:#ff7aa8; color:white; box-shadow:0 4px 10px rgba(255,0,100,0.3);
+}
+.btn-yes:hover, .btn-no:hover { background-color:#ff4f90; transform:scale(1.05); }
+
+.heart {
+  position:absolute; width:20px; height:20px; background:red; transform:rotate(45deg);
+  animation:fall linear;
+}
+.heart:before,
+.heart:after {
+  content:""; position:absolute; width:20px; height:20px; background:red; border-radius:50%;
+}
+.heart:before { top:-10px; left:0; }
+.heart:after { top:0; left:-10px; }
+
+@keyframes fall {
+  0% { top:-50px; opacity:1; }
+  100% { top:100vh; opacity:0; transform:rotate(90deg); }
+}
+</style>
+</head>
+<body>
+
+<svg viewBox="0 0 600 552">
+  <path d="M300,107.77C284.68,55.67,239.76,0,162.31,0,64.83,0,0,82.08,0,171.71c0,.48,0,.95,0,1.43-.52,19.5,0,217.94,299.87,379.69v0l0,0,.05,0,0,0,0,0v0C600,391.08,600.48,192.64,600,173.14c0-.48,0-.95,0-1.43C600,82.08,535.17,0,437.69,0,360.24,0,315.32,55.67,300,107.77" fill="#ee5282"/>
+</svg>
+
+<div class="container">
+  <div class="content" id="storyBox" style="cursor:pointer;">
+      <h1>Kliknij, aby rozpocząć...</h1>
+  </div>
+  <div class="Button section">
+      <button id="yesButton" class="btn btn-yes">Tak</button>
+      <button id="noButton" class="btn btn-no">Nie</button>
+  </div> 
+</div>
+
+<script src='https://cdn.jsdelivr.net/npm/three@0.136.0/build/three.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/three@0.136.0/examples/js/controls/OrbitControls.js'></script>
+<script src='https://unpkg.co/gsap@3/dist/gsap.min.js'></script>
+
+<script>
+console.clear();
+
+/* 3D HEART PARTICLES SETUP */
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 5000);
+camera.position.z = 500;
+const renderer = new THREE.WebGLRenderer();
+renderer.setPixelRatio(window.devicePixelRatio>1?2:1);
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+const controlsWebGL = new THREE.OrbitControls(camera, renderer.domElement);
+
+const tl = gsap.timeline({repeat:-1, yoyo:true});
+const path = document.querySelector("path");
+const length = path.getTotalLength();
+const vertices=[];
+for(let i=0;i<length;i+=0.1){
+  const point = path.getPointAtLength(i);
+  const vector = new THREE.Vector3(point.x, -point.y, 0);
+  vector.x += (Math.random()-0.5)*30;
+  vector.y += (Math.random()-0.5)*30;
+  vector.z += (Math.random()-0.5)*70;
+  vertices.push(vector);
+  tl.from(vector,{x:600/2,y:-552/2,z:0,ease:"power2.inOut",duration:"random(2,5)"},i*0.002);
+}
+const geometry = new THREE.BufferGeometry().setFromPoints(vertices);
+const material = new THREE.PointsMaterial({color:0xee5282,blending:THREE.AdditiveBlending,size:3});
+const particles = new THREE.Points(geometry, material);
+particles.position.x -= 600/2; particles.position.y += 552/2;
+scene.add(particles);
+gsap.fromTo(scene.rotation,{y:-0.2},{y:0.2,repeat:-1,yoyo:true,ease:'power2.inOut',duration:3});
+
+function render(){
+    requestAnimationFrame(render);
+    geometry.setFromPoints(vertices);
+    renderer.render(scene,camera);
+}
+window.addEventListener("resize", ()=>{
+  camera.aspect=window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth,window.innerHeight);
+});
+requestAnimationFrame(render);
+
+/* STORY TEXT LOGIC */
+const storyText = [
+  "Droga Izo, nasza historia zaczęła się niepozornie, od jakiejś aplikacji randkowej.",
+  "Wymieniliśmy tam ze sobą setki zdań i setki informacji o sobie.",
+  "Podczas tego czasu udało nam się naprawdę sporo o sobie dowiedzieć.",
+  "Wszystko to doprowadziło do naszego pierwszego wspólnego wyjścia, gdzie miło spędziliśmy czas.",
+  "O czym świadczyć może fakt, że spóźniliśmy się na naszą pierwszą wspólną aktywność — bilarda. :D",
+  "Oczywiście na tym nie zakończyliśmy naszej znajomości.",
+  "Zaczęliśmy wychodzić na następne spotkania — skoro czas mijał nam jak piasek przez palce, wiedzieliśmy, że warto kontynuować tę relację.",
+  "Masa wymienionych gestów i uprzejmości, łączących nas z każdym dniem, dawała nam poczucie, że traktujemy siebie poważnie.",
+  "Myśli o naszych uczuciach stały się coraz bardziej realne — i szybko okazało się, że są one bliźniacze.",
+  "Stąd też w mojej głowie narodziła się myśl, aby razem zrobić wspólny krok w przód.",
+  "Krok, w którym spróbujemy stworzyć coś naszego.",
+  "Coś, co — miejmy nadzieję — będzie początkiem historii, która przetrwa kryzysy i zapisze się na kartach życia jako wspólna podróż.",
+  "Tak więc przechodząc do sedna...",
+  "Czy zechciałabyś, abym został twoim chłopakiem?"
+];
+
+const storyBox = document.getElementById("storyBox");
+const buttons = document.querySelector(".Button");
+const btnYes = document.getElementById("yesButton");
+const btnNo = document.getElementById("noButton");
+
+let index=0; let started=false;
+
+storyBox.addEventListener("click", ()=>{
+    if(!started){ started=true; storyBox.innerHTML=""; }
+    if(index<storyText.length-1){
+        const p = document.createElement("p");
+        p.textContent=storyText[index];
+        p.style.opacity="0";
+        storyBox.appendChild(p);
+        setTimeout(()=>p.style.opacity="1",10);
+        index++;
+    } else {
+        // OSTATNIA LINIA - zostaje tylko h2
+        storyBox.innerHTML="";
+        const final = document.createElement("h2");
+        final.textContent=storyText[storyText.length-1];
+        final.style.opacity="0"; final.style.transition="0.5s";
+        storyBox.appendChild(final);
+        setTimeout(()=>final.style.opacity="1",10);
+
+        // pokaż przyciski
+        btnYes.style.opacity=1; btnNo.style.opacity=1;
+        btnYes.style.transition="opacity 0.8s"; btnNo.style.transition="opacity 0.8s";
+        btnYes.style.visibility="visible"; btnNo.style.visibility="visible";
+
+        storyBox.style.pointerEvents="none";
+    }
+});
+
+/* HEART EFFECT ON CLICK YES */
+function createHeart(){
+    const heart=document.createElement("div");
+    heart.classList.add("heart");
+    heart.style.left=Math.random()*100+"vw";
+    heart.style.animationDuration=(Math.random()*2+3)+"s";
+    document.body.appendChild(heart);
+    setTimeout(()=>heart.remove(),5000);
+}
+
+btnYes.addEventListener("click", ()=>{
+    // Ukryj wiadomość / kartkę
+    document.querySelector(".container").style.display="none";
+
+    // Twórz serduszka
+    for(let i=0;i<50;i++){
+        setTimeout(createHeart,i*100);
+    }
+});
+</script>
+</body>
+</html>
